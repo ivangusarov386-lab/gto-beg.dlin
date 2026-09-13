@@ -5,178 +5,156 @@
   <meta name="viewport"
         content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <title>Счётчик кругов — Трек & Поле</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box }
 
     :root {
-      --bg1:#0d111a; --bg2:#151d2b; --text:#f2f5fa; --muted:#aab3c8;
-      --brand:#66bfff; --ok:#6ee7b7; --danger:#ff8f8f;
-      --card-top:#2a3550; --card-bot:#1e2941;
-      --shadow:0 6px 14px rgba(0,0,0,.45);
+      --bg1:#0a0e17; --bg2:#131b2c; --text:#f2f5fa; --muted:#96a1ba;
+      --brand:#5ab7ff; --brand-2:#8cd3ff; --ok:#5eead4; --warn:#facc15; --danger:#ff7a7a;
+      --card-top:#232f52; --card-bot:#151d34;
+      --card-border: rgba(255,255,255,.08);
+      --card-highlight: rgba(255,255,255,.06);
+      --shadow: 0 10px 24px rgba(0,0,0,.45);
       --ctrl-text:#f2f5fa;
-      --header-h: 190px;
+      --header-h: 210px;
     }
 
     /* LIGHT: сине-стеклянная тема */
     body.light {
-      --bg1:#e7f0ff;
-      --bg2:#d9e3f6;
-      --text:#0f172a;
-      --muted:#4b5563;
-      --brand:#1d75ff;
-      --ok:#12b981;
-      --danger:#f97373;
-      --card-top:rgba(255,255,255,0.9);
-      --card-bot:rgba(255,255,255,0.9);
-      --shadow:0 18px 40px rgba(15,23,42,0.16);
+      --bg1:#e7f0ff; --bg2:#d9e3f6; --text:#0f172a; --muted:#586174;
+      --brand:#1d75ff; --brand-2:#3b82f6; --ok:#0f9d72; --warn:#b45309; --danger:#dc2626;
+      --card-top:#ffffff; --card-bot:#eef3ff;
+      --card-border: rgba(15,23,42,.08);
+      --card-highlight: rgba(255,255,255,.9);
+      --shadow: 0 14px 30px rgba(15,23,42,.12);
       --ctrl-text:#0f172a;
       background:radial-gradient(circle at 0% 0%,#eef4ff 0,#e2ebff 32%,#d7e4ff 60%,#d3ddf5 100%);
     }
 
     html, body { height:100%; margin:0; overflow:hidden; }
+    html { -webkit-text-size-adjust:100%; }
+    * { -webkit-tap-highlight-color: transparent; }
+
     body {
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial;
+      font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
       background:linear-gradient(180deg,var(--bg1),var(--bg2));
       color:var(--text);
     }
 
+    /* Единый "стеклянный" стиль поверхностей — без backdrop-filter,
+       чтобы одинаково хорошо и быстро работало на слабом железе (iPad 2). */
+    header, .lane-card, .saved {
+      background:linear-gradient(180deg,var(--card-top),var(--card-bot));
+      border:1px solid var(--card-border);
+      box-shadow:var(--shadow), inset 0 1px 0 var(--card-highlight);
+    }
+
     header {
       position:fixed; top:0; left:0; right:0; z-index:100;
-      background:rgba(20,25,40,.85);
-      backdrop-filter:blur(10px);
+      border-radius:0;
+      border-left:none; border-right:none; border-top:none;
       text-align:center;
-      padding:8px 8px 10px;
-      box-shadow:0 8px 18px rgba(0,0,0,0.45);
-    }
-    /* стеклянная шапка в светлой теме */
-    body.light header{
-      background:rgba(255,255,255,0.78);
-      backdrop-filter:blur(22px);
-      box-shadow:0 14px 30px rgba(15,23,42,0.16);
-      border-bottom:1px solid rgba(148,163,184,0.28);
+      padding:10px 10px 12px;
     }
 
     .header-inner {
       display:flex; justify-content:center; align-items:center;
       position:relative;
-      margin-bottom:12px; /* отступ под таймером */
+      margin-bottom:14px;
     }
 
-    /* Тумблер Google */
-    .gs-toggle {
+    /* Тумблеры (Google / Тема) — увеличены под палец (56x30, как системный UISwitch) */
+    .gs-toggle, .theme-toggle {
       position:absolute;
-      left:8px;
-      width:46px;
-      height:22px;
-      border-radius:11px;
-      background:rgba(148,163,184,0.35);
-      display:flex;
-      align-items:center;
-      justify-content:flex-start;
-      padding:2px 4px;
-      font-size:13px;
+      width:56px; height:30px;
+      border-radius:15px;
       cursor:pointer;
-      color:#e5e7eb;
-      transition:.2s;
+      touch-action:manipulation;
+      background:rgba(148,163,184,.28);
+      box-shadow:inset 0 1px 3px rgba(0,0,0,.25);
     }
-    .gs-toggle span {
-      flex:1;
-      text-align:center;
-    }
-    .gs-toggle-knob {
-      position:absolute;
-      top:2px;
-      width:18px;
-      height:18px;
-      border-radius:999px;
-      background:#e5e7eb;
-      transform:translateX(2px);
-      transition:.2s;
-      box-shadow:0 2px 4px rgba(15,23,42,0.35);
-    }
-    .gs-toggle.active {
-      background:rgba(56,189,248,0.85);
-      color:#0f172a;
-    }
-    .gs-toggle.active .gs-toggle-knob {
-      transform:translateX(26px);
-      background:#f9fafb;
-    }
-    body.light .gs-toggle{
-      background:rgba(148,163,184,0.18);
-      color:#0f172a;
-    }
+    .gs-toggle { left:6px; }
+    .theme-toggle { right:6px; }
 
-    .theme-toggle {
-      position:absolute; right:8px;
-      width:42px; height:22px;
-      background:rgba(255,255,255,.2);
-      border-radius:11px;
-      cursor:pointer;
-      box-shadow:inset 0 1px 2px rgba(255,255,255,.5),
-                 0 2px 6px rgba(15,23,42,.45);
+    .toggle-icon {
+      position:absolute; top:50%; transform:translateY(-50%);
+      width:14px; height:14px; color:var(--muted);
+      pointer-events:none;
+      transition:opacity .2s;
     }
-    .theme-toggle::before {
-      content:'';
-      position:absolute; top:2px; left:2px;
-      width:18px; height:18px;
-      background:var(--text);
+    .gs-toggle .toggle-icon { left:8px; }
+    .theme-toggle .icon-moon { left:8px; opacity:.9; }
+    .theme-toggle .icon-sun { right:8px; opacity:.35; }
+    body.light .theme-toggle .icon-moon { opacity:.35; }
+    body.light .theme-toggle .icon-sun { opacity:.9; }
+
+    .gs-toggle-knob, .theme-toggle-knob {
+      position:absolute; top:4px; left:4px;
+      width:22px; height:22px;
       border-radius:50%;
-      transition:.3s;
+      box-shadow:0 2px 6px rgba(0,0,0,.35);
+      transition:.25s;
+      z-index:2;
     }
-    body.light .theme-toggle {
-      background:rgba(148,163,184,0.2);
-      box-shadow:inset 0 1px 2px rgba(255,255,255,.6),
-                 0 4px 10px rgba(15,23,42,.22);
-    }
-    body.light .theme-toggle::before {
-      background:#111827;
-      transform:translateX(20px);
-    }
+    .gs-toggle-knob { background:#e5e7eb; }
+    .theme-toggle-knob { background:var(--text); }
+
+    .gs-toggle.active { background:rgba(56,189,248,.85); }
+    .gs-toggle.active .gs-toggle-knob { transform:translateX(26px); background:#f9fafb; }
+    .gs-toggle.active .toggle-icon { color:#06121f; }
+
+    body.light .theme-toggle-knob { background:#0f172a; }
+    body.light .theme-toggle .theme-toggle-knob { transform:translateX(26px); }
 
     .timer {
       font-weight:900;
       font-size:clamp(30px,7vw,56px);
       color:var(--brand);
-      text-shadow:0 0 16px rgba(102,191,255,.55);
+      text-shadow:0 0 16px rgba(90,183,255,.5);
       letter-spacing:1px;
-    }
-    body.light .timer{
-      color:#1d4ed8;
-      text-shadow:0 0 22px rgba(59,130,246,0.55);
+      font-variant-numeric: tabular-nums;
     }
 
     .controls {
       display:flex; justify-content:center;
-      flex-wrap:wrap; gap:6px;
+      flex-wrap:wrap; gap:8px;
       margin-top:4px;
-      margin-bottom:12px; /* отступ до блока Круги */
+      margin-bottom:14px;
     }
 
     button, input {
       border:none; outline:none;
-      border-radius:10px;
+      border-radius:12px;
       font-weight:700;
+      font-family:inherit;
       transition:.2s;
+      -webkit-appearance:none;
     }
     button {
-      padding:6px 10px;
-      font-size:13px;
+      display:inline-flex; align-items:center; justify-content:center;
+      min-height:44px;
+      padding:0 16px;
+      font-size:14px;
       background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.08));
       color:var(--ctrl-text);
       box-shadow:inset 0 1px 1px rgba(255,255,255,.25),
                  0 2px 8px rgba(0,0,0,.35);
       cursor:pointer;
+      touch-action:manipulation;
     }
+    button svg { margin-right:6px; flex-shrink:0; }
     button:active { transform:translateY(1px); }
     .btn-primary {
-      background:linear-gradient(180deg,var(--brand),#8cd3ff);
+      background:linear-gradient(180deg,var(--brand),var(--brand-2));
       color:#06121f;
     }
     .btn-danger {
       background:linear-gradient(180deg,var(--danger),#ffb3b3);
-      color:#0b1220;
+      color:#170606;
     }
     body.light button {
       border-radius:999px;
@@ -187,17 +165,20 @@
         inset 0 1px 0 rgba(255,255,255,0.85);
       color:#0f172a;
     }
-    body.light button:hover{
-      box-shadow:
-        0 10px 24px rgba(15,23,42,0.16),
-        inset 0 1px 0 rgba(255,255,255,0.9);
-      transform:translateY(-1px);
+    @media (hover:hover) and (pointer:fine) {
+      body.light button:hover{
+        box-shadow:
+          0 10px 24px rgba(15,23,42,0.16),
+          inset 0 1px 0 rgba(255,255,255,0.9);
+        transform:translateY(-1px);
+      }
     }
 
     main {
       margin-top:var(--header-h);
       height:calc(100% - var(--header-h));
       overflow-y:auto;
+      -webkit-overflow-scrolling:touch; /* плавный инерционный скролл на старом iOS */
       padding:8px;
     }
     body.light main{
@@ -214,16 +195,18 @@
       gap:8px;
       align-items:center;
       justify-content:center;
+      flex-wrap:wrap;
     }
     .text-input {
       flex:0 1 480px;
       max-width:100%;
-      padding:8px 10px;
+      min-height:44px;
+      padding:8px 12px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
       background:rgba(255,255,255,.08);
       color:var(--text);
-      font-size:14px;
+      font-size:16px; /* >=16px — иначе Safari на iOS зумит страницу при фокусе */
     }
     body.light .text-input {
       background:rgba(255,255,255,0.92);
@@ -246,52 +229,212 @@
     }
 
     .lane-card {
-      background:linear-gradient(180deg,var(--card-top),var(--card-bot));
-      border-radius:16px;
-      padding:8px;
-      box-shadow:var(--shadow);
+      border-radius:18px;
+      padding:10px;
       text-align:center;
       position:relative;
       overflow:hidden;
-      border:1px solid rgba(255,255,255,.05);
-      transition:box-shadow .15s ease-out, transform .15s ease-out, background .15s ease-out;
+      transition:box-shadow .15s ease-out, transform .15s ease-out;
     }
-    body.light .lane-card{
-      background:rgba(255,255,255,0.92);
-      backdrop-filter:blur(18px);
-      border-radius:24px;
-      border:1px solid rgba(148,163,184,0.3);
-      box-shadow:
-        0 18px 40px rgba(15,23,42,0.15),
-        0 0 0 1px rgba(255,255,255,0.8) inset;
+    @media (hover:hover) and (pointer:fine) {
+      body.light .lane-card:hover{
+        transform:translateY(-2px);
+      }
     }
-    body.light .lane-card:hover{
-      transform:translateY(-2px);
-      box-shadow:
-        0 22px 46px rgba(15,23,42,0.18),
-        0 0 0 1px rgba(191,219,254,0.9) inset;
+
+    .lane-top {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:2px;
     }
-    body.light .lane-card .lane-footer{
-      color:#6b7280;
+
+    .badge {
+      background:rgba(255,255,255,.1);
+      padding:4px 10px;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--brand);
     }
-    body.light .lane-card .val{
+    body.light .badge{
+      background:rgba(219,234,254,0.96);
       color:#1d4ed8;
-      text-shadow:0 0 12px rgba(59,130,246,0.35);
     }
 
-    body.light .saved{
+    .status-pill {
+      display:inline-flex; align-items:center;
+      font-size:10px; font-weight:800; letter-spacing:.4px;
+      padding:4px 9px; border-radius:999px;
+      background:rgba(255,255,255,.08);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .status-pill::before {
+      content:''; width:6px; height:6px; border-radius:50%;
+      background:currentColor; margin-right:5px; flex-shrink:0;
+    }
+    .status-pill.running { color:var(--warn); background:rgba(250,204,21,.15); }
+    .status-pill.last-lap { color:var(--danger); background:rgba(255,122,122,.15); }
+    .status-pill.finished { color:var(--ok); background:rgba(94,234,212,.15); }
+    body.light .status-pill { background:rgba(148,163,184,.16); }
+    body.light .status-pill.running { background:rgba(180,83,9,.14); }
+    body.light .status-pill.last-lap { background:rgba(220,38,38,.12); }
+    body.light .status-pill.finished { background:rgba(15,157,114,.14); }
+
+    .lane-time {
+      font-weight:900;
+      font-size:clamp(22px,6vw,32px);
+      color:var(--brand);
+      text-shadow:0 0 10px rgba(90,183,255,.3);
+      margin:8px 0 10px;
+      font-variant-numeric: tabular-nums;
+    }
+    body.light .lane-time{
+      color:#1d4ed8;
+      text-shadow:0 0 14px rgba(59,130,246,0.3);
+    }
+
+    .lane-identity {
+      display:flex;
+      align-items:stretch;
+    }
+    .bib-input {
+      flex:0 0 56px;
+      width:56px; height:44px;
+      margin-right:8px;
+      text-align:center;
+      font-size:20px;
+      font-weight:900;
+      border-radius:12px;
+      border:2px solid rgba(255,255,255,.25);
+      background:rgba(255,255,255,.12);
+      color:var(--text);
+    }
+    body.light .bib-input{
       background:rgba(255,255,255,0.96);
-      backdrop-filter:blur(20px);
-      border-radius:24px;
-      border:1px solid rgba(148,163,184,0.35);
-      box-shadow:0 18px 40px rgba(15,23,42,0.16);
-    }
-    body.light .saved-item{
-      background:rgba(248,250,252,0.95);
-      border-radius:18px;
-      border:1px solid rgba(209,213,219,0.9);
+      border:1px solid rgba(148,163,184,0.55);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
+      color:#111827;
     }
 
+    .athlete-input {
+      flex:1 1 auto;
+      height:44px;
+      padding:0 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      font-size:16px; /* >=16px — иначе Safari на iOS зумит страницу при фокусе */
+      text-align:center;
+    }
+    body.light .athlete-input{
+      background:rgba(255,255,255,0.96);
+      border:1px solid rgba(148,163,184,0.45);
+      box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
+      color:#111827;
+    }
+
+    .lane-footer {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:10px;
+      color:var(--muted);
+      font-size:10px;
+      line-height:1.3;
+    }
+    .lane-hint { flex:1; text-align:left; margin-right:8px; }
+    .undo {
+      flex-shrink:0;
+      min-height:36px; min-width:44px;
+      padding:6px 10px;
+      border-radius:10px;
+      background:rgba(255,255,255,.15);
+      color:var(--text);
+      font-size:13px;
+      touch-action:manipulation;
+    }
+    body.light .undo{
+      background:rgba(226,232,240,0.95);
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,0.6);
+      color:#111827;
+    }
+
+    .finish-ribbon {
+      position:absolute;
+      top:14px; right:-34px;
+      width:130px;
+      transform:rotate(45deg);
+      background:linear-gradient(180deg,#22c55e,#16a34a);
+      color:#04140b;
+      font-weight:900;
+      font-size:11px;
+      letter-spacing:1.5px;
+      text-align:center;
+      padding:4px 0;
+      box-shadow:0 4px 10px rgba(0,0,0,.35);
+    }
+    body.light .finish-ribbon {
+      background:linear-gradient(180deg,#4ade80,#16a34a);
+      color:#052e16;
+    }
+
+    /* Жёлтая подсветка – дорожка бежит */
+    .lane-card.running {
+      box-shadow:
+        var(--shadow), inset 0 1px 0 var(--card-highlight),
+        0 8px 18px rgba(250,204,21,.5);
+    }
+    /* Красная подсветка – последний круг */
+    .lane-card.last-lap {
+      box-shadow:
+        var(--shadow), inset 0 1px 0 var(--card-highlight),
+        0 8px 18px rgba(239,68,68,.5);
+    }
+    .lane-card.finished {
+      box-shadow:
+        var(--shadow), inset 0 1px 0 var(--card-highlight),
+        0 8px 18px rgba(34,197,94,.35);
+    }
+
+    .lane-card.flash {
+      animation: flashGlow .5s ease-out;
+    }
+    @keyframes flashGlow {
+      0%{box-shadow:var(--shadow),0 0 0 0 rgba(90,183,255,.7);}
+      60%{box-shadow:var(--shadow),0 0 22px 10px rgba(90,183,255,.28);}
+      100%{box-shadow:var(--shadow);}
+    }
+
+    .saved {
+      margin-top:14px;
+      border-radius:18px;
+      padding:14px;
+    }
+    .saved-header {
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+    .saved-title { font-weight:900; font-size:18px; }
+    .saved-actions { display:flex; gap:8px; }
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center;
+      min-height:40px;
+      padding:0 14px;
+      border-radius:12px;
+      font-weight:800;
+      font-size:13px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.08);
+      color:var(--text);
+      cursor:pointer;
+      touch-action:manipulation;
+    }
+    .btn svg { margin-right:6px; flex-shrink:0; }
     body.light .btn{
       border-radius:999px;
       background:linear-gradient(145deg,rgba(255,255,255,0.96),rgba(226,232,255,0.9));
@@ -301,208 +444,51 @@
         inset 0 1px 0 rgba(255,255,255,0.9);
       color:#0f172a;
     }
-
-    body.light .stat{
-      background:rgba(248,250,252,0.92);
-      border-radius:16px;
-      border:1px solid rgba(209,213,219,0.9);
-    }
-    body.light .stat .label{
-      color:#6b7280;
-    }
-
-    body.light .undo{
-      background:rgba(226,232,240,0.95);
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,0.6);
-      color:#111827;
-    }
-
-    body.light .badge{
-      background:rgba(219,234,254,0.96);
-      color:#1d4ed8;
-    }
-
-    body.light .bib-input{
-      background:rgba(255,255,255,0.96);
-      border-radius:22px;
-      border:1px solid rgba(148,163,184,0.55);
-      box-shadow:
-        0 10px 24px rgba(15,23,42,0.2),
-        inset 0 1px 0 rgba(255,255,255,0.9);
-      color:#111827;
-    }
-
-    .bib-input {
-      width:64px; height:64px;
-      margin:6px auto;
-      display:block;
-      text-align:center;
-      font-size:26px;
-      font-weight:900;
-      border-radius:16px;
-      border:2px solid rgba(255,255,255,.25);
-      background:rgba(255,255,255,.12);
-      color:var(--text);
-    }
-    body.light .athlete-input{
-      background:rgba(255,255,255,0.96);
-      border-radius:16px;
-      border:1px solid rgba(148,163,184,0.45);
-      box-shadow:inset 0 1px 0 rgba(255,255,255,0.9);
-      color:#111827;
-    }
-
-    .athlete-input {
-      width:100%;
-      margin-top:4px;
-      padding:6px 8px;
-      border-radius:8px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.08);
-      color:var(--text);
-      font-size:13px;
-      text-align:center;
-    }
-
-    .lane-stats { margin-top:6px; }
-    .stat {
-      background:rgba(0,0,0,.18);
-      border-radius:10px;
-      padding:8px;
-      text-align:center;
-    }
-    body.light .stat {
-      background:rgba(255,255,255,.75);
-      border:1px solid rgba(0,0,0,.05);
-    }
-    .stat .label {
-      color:var(--muted);
-      font-size:11px;
-      font-weight:700;
-    }
-    .stat .val {
-      font-weight:900;
-      font-size:19px;
-      line-height:1.2;
-      margin-top:2px;
-      color:var(--brand);
-      text-shadow:0 0 6px rgba(102,191,255,.35);
-    }
-
-    .lane-footer {
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      margin-top:8px;
-      color:var(--muted);
-      font-size:11px;
-    }
-    .undo {
-      padding:5px 8px;
-      border-radius:10px;
-      background:rgba(255,255,255,.15);
-      color:var(--text);
-      font-size:12px;
-    }
-
-    .finish-banner {
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      border-radius:16px;
-      background:rgba(34,197,94,.12);
-      border:2px solid #22c55e;
-      color:#22c55e;
-      font-weight:900;
-      font-size:20px;
-      text-shadow:0 0 8px rgba(34,197,94,.35);
-      pointer-events:none;
-    }
-    body.light .finish-banner{
-      background:rgba(187,247,208,0.92);
-      border-color:#16a34a;
-      color:#065f46;
-    }
-
-    .saved {
-      margin-top:14px;
-      background:linear-gradient(180deg,var(--card-top),var(--card-bot));
-      border-radius:16px;
-      padding:12px;
-      box-shadow:var(--shadow);
-      border:1px solid rgba(255,255,255,.05);
-    }
-    .saved-header {
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:8px;
-    }
-    .saved-title { font-weight:900; font-size:18px; }
-    .saved-actions { display:flex; gap:8px; }
-    .btn {
-      padding:6px 10px;
-      border-radius:10px;
-      font-weight:800;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.08);
-      color:var(--text);
-      cursor:pointer;
-    }
     .saved-list { display:grid; gap:8px; }
     .saved-item {
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:8px;
-      padding:10px;
-      border-radius:12px;
+      flex-wrap:wrap;
+      padding:12px;
+      border-radius:14px;
       background:rgba(0,0,0,.18);
     }
-    .saved-meta { font-weight:700; }
+    body.light .saved-item{
+      background:rgba(248,250,252,0.95);
+      border-radius:16px;
+      border:1px solid rgba(209,213,219,0.9);
+    }
+    .saved-meta { font-weight:700; font-size:13px; }
     .saved-buttons { display:flex; gap:8px; }
-
-    /* подсветка статусов остаётся общей — работает и в светлой теме */
-
-    /* Жёлтая подсветка – дорожка бежит (свечение снизу) */
-    .lane-card.running {
-      box-shadow:
-        var(--shadow),
-        0 8px 18px rgba(250,204,21,0.55);
-    }
-    /* Красная подсветка – последний круг (свечение снизу) */
-    .lane-card.last-lap {
-      box-shadow:
-        var(--shadow),
-        0 8px 18px rgba(239,68,68,0.55);
-    }
-
-    .lane-card.flash {
-      animation: flashGlow .5s ease-out;
-    }
-    @keyframes flashGlow {
-      0%{box-shadow:var(--shadow),0 0 0 0 rgba(102,191,255,.7);}
-      60%{box-shadow:var(--shadow),0 0 22px 10px rgba(102,191,255,.28);}
-      100%{box-shadow:var(--shadow);}
-    }
-
-    .badge {
-      background:rgba(255,255,255,.1);
-      padding:4px 10px;
-      border-radius:12px;
-      font-size:14px;
-      font-weight:800;
-      color:var(--brand);
-      display:inline-block;
-      margin-bottom:6px;
-    }
 
     @media (min-width:900px) {
       .lanes{ grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+    }
+
+    /* ===== Фолбэки для старых WebKit без CSS Grid / gap (Safari iOS ≤ 9.3, iPad 2) ===== */
+    @supports not (display: grid) {
+      .lanes {
+        display:flex;
+        flex-wrap:wrap;
+        margin:-4px;
+      }
+      .lanes > .lane-card {
+        flex:1 1 180px;
+        min-width:180px;
+        margin:4px;
+      }
+    }
+    @supports not (gap: 1px) {
+      .controls > * { margin:3px; }
+      .row .field { margin-bottom:8px; }
+      .row .field > * { margin:0 4px 4px 0; }
+      .saved-header > * { margin:0 4px; }
+      .saved-actions > * { margin:0 4px; }
+      .saved-list > * { margin-bottom:8px; }
+      .saved-item > * { margin:0 4px 4px 0; }
+      .saved-buttons > * { margin:0 4px; }
     }
   </style>
 </head>
@@ -510,17 +496,43 @@
 <header id="appHeader">
   <div class="header-inner">
     <div class="gs-toggle" id="gsToggle" title="Отправка в Google">
-      <span>☁</span>
+      <svg class="toggle-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M7 18h10a4 4 0 0 0 .5-7.97A5.5 5.5 0 0 0 7.1 8.1 4 4 0 0 0 7 18z"/></svg>
       <div class="gs-toggle-knob"></div>
     </div>
     <div class="timer" id="timer">00:00:00</div>
-    <div class="theme-toggle" id="themeToggle" title="Тема"></div>
+    <div class="theme-toggle" id="themeToggle" title="Тема">
+      <svg class="toggle-icon icon-moon" viewBox="0 0 24 24"><path fill="currentColor" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      <svg class="toggle-icon icon-sun" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="4" fill="currentColor"/>
+        <g stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="12" y1="2" x2="12" y2="4"/><line x1="12" y1="20" x2="12" y2="22"/>
+          <line x1="2" y1="12" x2="4" y2="12"/><line x1="20" y1="12" x2="22" y2="12"/>
+          <line x1="4.9" y1="4.9" x2="6.3" y2="6.3"/><line x1="17.7" y1="17.7" x2="19.1" y2="19.1"/>
+          <line x1="4.9" y1="19.1" x2="6.3" y2="17.7"/><line x1="17.7" y1="6.3" x2="19.1" y2="4.9"/>
+        </g>
+      </svg>
+      <div class="theme-toggle-knob"></div>
+    </div>
   </div>
   <div class="controls">
-    <button id="startBtn" class="btn-primary">▶️ Старт</button>
-    <button id="pauseBtn">⏸ Пауза</button>
-    <button id="stopBtn" class="btn-danger">⏹ Стоп</button>
-    <button id="resetBtn">🔄 Сброс</button>
+    <button id="startBtn" class="btn-primary">
+      <svg viewBox="0 0 24 24" width="16" height="16"><polygon points="6,4 20,12 6,20" fill="currentColor"/></svg>
+      <span>Старт</span>
+    </button>
+    <button id="pauseBtn">
+      <svg viewBox="0 0 24 24" width="16" height="16"><rect x="6" y="4" width="4" height="16" fill="currentColor"/><rect x="14" y="4" width="4" height="16" fill="currentColor"/></svg>
+      <span>Пауза</span>
+    </button>
+    <button id="stopBtn" class="btn-danger">
+      <svg viewBox="0 0 24 24" width="16" height="16"><rect x="5" y="5" width="14" height="14" rx="2" fill="currentColor"/></svg>
+      <span>Стоп</span>
+    </button>
+    <button id="resetBtn">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 3v6h6"/><path d="M21 21v-6h-6"/><path d="M4 15a8 8 0 0 0 14 5 8 8 0 0 0-1-13.5L15 9"/>
+      </svg>
+      <span>Сброс</span>
+    </button>
   </div>
   <div class="row">
     <div class="field">
@@ -544,7 +556,10 @@
     <div class="saved-header">
       <div class="saved-title">Сохранённые забеги</div>
       <div class="saved-actions">
-        <button class="btn" id="downloadAll">Скачать все</button>
+        <button class="btn" id="downloadAll">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+          <span>Скачать все</span>
+        </button>
       </div>
     </div>
     <div class="saved-list" id="savedList"></div>
@@ -652,15 +667,23 @@
       const card = document.createElement('div');
 
       let cls = 'lane-card';
-
-      // Подсветка только если заполнены манишка + номер участника
       const hasData = lane.bib.trim() !== '' && lane.athlete.trim() !== '';
 
-      if (!lane.finished && hasData) {
-        if (lane.laps.length === totalLaps - 1 && lane.laps.length > 0) {
-          cls += ' last-lap';       // последний круг – красный
-        } else if (lane.laps.length > 0) {
-          cls += ' running';        // просто бежит – жёлтый
+      let state = 'idle';
+      let stateLabel = hasData ? 'Готов' : 'Ожидание';
+      if (lane.finished) {
+        state = 'finished';
+        stateLabel = 'Финиш';
+        cls += ' finished';
+      } else if (hasData && lane.laps.length > 0) {
+        if (lane.laps.length === totalLaps - 1) {
+          state = 'last-lap';
+          stateLabel = 'Последний круг';
+          cls += ' last-lap';
+        } else {
+          state = 'running';
+          stateLabel = 'Бежит';
+          cls += ' running';
         }
       }
       card.className = cls;
@@ -676,29 +699,35 @@
         totalMs = lane.laps.length ? lane.laps[lane.laps.length-1] : 0;
       }
 
+      const hint = lane.finished ? 'Дистанция завершена' : 'Тап по карточке — круг';
+
       card.innerHTML = `
-        <span class="badge">${lane.laps.length}/${totalLaps}</span>
-        <input class="bib-input" maxlength="2" placeholder="00" value="${lane.bib || ''}">
-        <input class="athlete-input" placeholder="Номер спортсмена" value="${lane.athlete || ''}">
-        <div class="lane-stats">
-          <div class="stat">
-            <div class="label">Всего</div>
-            <div class="val total-val">${formatTotal(totalMs)}</div>
-          </div>
+        <div class="lane-top">
+          <span class="badge">${lane.laps.length}/${totalLaps}</span>
+          ${lane.finished ? '' : `<span class="status-pill ${state}">${stateLabel}</span>`}
+        </div>
+        <div class="lane-time">${formatTotal(totalMs)}</div>
+        <div class="lane-identity">
+          <input class="bib-input" maxlength="2" placeholder="00" value="${lane.bib || ''}">
+          <input class="athlete-input" placeholder="Номер спортсмена" value="${lane.athlete || ''}">
         </div>
         <div class="lane-footer">
-          <div>${lane.finished ? '🏁 Финишировал' : 'Нажми старт'}</div>
-          <button class="undo">−1</button>
+          <div class="lane-hint">${hint}</div>
+          <button class="undo" aria-label="Отменить круг">−1</button>
         </div>
-        ${lane.finished ? "<div class='finish-banner'>🏁 ФИНИШИРОВАЛ</div>" : ""}
+        ${lane.finished ? '<div class="finish-ribbon">ФИНИШ</div>' : ''}
       `;
 
-      card.querySelector('.athlete-input')
-        .addEventListener('input', e => lane.athlete = e.target.value);
-      card.querySelector('.bib-input')
-        .addEventListener('input', e => {
-          lane.bib = e.target.value.replace(/[^0-9]/g,'').slice(0,2);
-        });
+      const athleteInput = card.querySelector('.athlete-input');
+      athleteInput.addEventListener('input', e => lane.athlete = e.target.value);
+      athleteInput.addEventListener('click', e => e.stopPropagation());
+
+      const bibInput = card.querySelector('.bib-input');
+      bibInput.addEventListener('input', e => {
+        lane.bib = e.target.value.replace(/[^0-9]/g,'').slice(0,2);
+      });
+      bibInput.addEventListener('click', e => e.stopPropagation());
+
       card.querySelector('.undo')
         .addEventListener('click', e => { e.stopPropagation(); undoLap(index); });
 
@@ -714,7 +743,7 @@
       lanes.forEach((lane, index) => {
         const card = lanesEl.children[index];
         if (!card) return;
-        const totalEl = card.querySelector('.total-val');
+        const totalEl = card.querySelector('.lane-time');
         if (!totalEl) return;
         if (!lane.finished) {
           totalEl.textContent = formatTotal(now);
@@ -900,8 +929,14 @@
       item.innerHTML = `
         <div class="saved-meta"><strong>${escapeHtml(run.name)}</strong> · ${dateStr} ${timeStr}</div>
         <div class="saved-buttons">
-          <button class="btn" data-act="dl">Скачать</button>
-          <button class="btn" data-act="rm">Удалить</button>
+          <button class="btn" data-act="dl">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 10l5 5 5-5"/><path d="M5 21h14"/></svg>
+            <span>Скачать</span>
+          </button>
+          <button class="btn" data-act="rm">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 14h10l1-14"/></svg>
+            <span>Удалить</span>
+          </button>
         </div>
       `;
       item.querySelector('[data-act="dl"]')
