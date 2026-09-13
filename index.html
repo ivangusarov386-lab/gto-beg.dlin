@@ -318,14 +318,17 @@
 
     .athlete-input {
       flex:1 1 auto;
+      min-width:0; /* иначе flex-элемент не сжимается меньше текста плейсхолдера и вылезает за карточку */
       height:44px;
-      padding:0 10px;
+      padding:0 8px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.12);
       background:rgba(255,255,255,.08);
       color:var(--text);
       font-size:16px; /* >=16px — иначе Safari на iOS зумит страницу при фокусе */
       text-align:center;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
     body.light .athlete-input{
       background:rgba(255,255,255,0.96);
@@ -465,6 +468,40 @@
 
     @media (min-width:900px) {
       .lanes{ grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+    }
+
+    /* ===== Компактный режим для телефонов — верхняя панель и карточки заметно легче ===== */
+    @media (max-width:480px) {
+      header { padding:8px 8px 10px; }
+      .header-inner { margin-bottom:8px; }
+      .timer { font-size:clamp(24px,9vw,34px); }
+
+      .controls { gap:6px; margin-top:2px; margin-bottom:8px; }
+      .controls button {
+        min-height:38px;
+        padding:0 10px;
+        font-size:12px;
+        border-radius:10px;
+      }
+      .controls button svg { width:13px; height:13px; margin-right:4px; }
+
+      .row { gap:6px; }
+      .row .field { gap:6px; }
+      .row label { font-size:13px; }
+      .text-input { min-height:38px; padding:6px 10px; }
+
+      .lanes {
+        gap:6px;
+        margin-top:6px;
+        grid-template-columns:repeat(auto-fit,minmax(148px,1fr));
+      }
+      .lane-card { padding:8px; border-radius:14px; }
+      .lane-time { font-size:clamp(18px,7vw,26px); margin:6px 0 8px; }
+      .bib-input { flex:0 0 46px; width:46px; height:38px; font-size:17px; margin-right:6px; }
+      .athlete-input { height:38px; padding:0 6px; }
+      .lane-footer { font-size:9px; margin-top:8px; }
+      .lane-hint { margin-right:6px; }
+      .undo { min-height:32px; min-width:38px; padding:5px 8px; font-size:12px; }
     }
 
     /* ===== Фолбэки для старых WebKit без CSS Grid / gap (Safari iOS ≤ 9.3, iPad 2) ===== */
@@ -709,7 +746,7 @@
         <div class="lane-time">${formatTotal(totalMs)}</div>
         <div class="lane-identity">
           <input class="bib-input" maxlength="2" placeholder="00" value="${lane.bib || ''}">
-          <input class="athlete-input" placeholder="Номер спортсмена" value="${lane.athlete || ''}">
+          <input class="athlete-input" placeholder="Участник" value="${lane.athlete || ''}">
         </div>
         <div class="lane-footer">
           <div class="lane-hint">${hint}</div>
