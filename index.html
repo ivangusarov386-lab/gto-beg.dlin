@@ -119,14 +119,20 @@
 
     .hint{font-size:12px;color:var(--muted);margin-top:8px}
 
-    /* ---- Переключатель "Ввод данных" / "Контроль" ---- */
-    .view-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:20px 0 4px}
+    /* ---- Переключатель "Ввод данных" / "Контроль" — отдельная секция, явно отделённая от кнопок таймера ---- */
+    .view-switch-section{margin-top:24px;padding-top:20px;border-top:1px dashed var(--dashed-border)}
+    .view-switch-label{text-align:center;font-family:var(--font-display);font-size:11px;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+    .view-switch{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:4px;
+      background:var(--bg-2);border:1px solid var(--line);border-radius:14px}
     .view-switch button{
-      padding:11px 8px;border-radius:12px;border:1px solid var(--line);background:var(--bg-2);color:var(--muted);
+      padding:11px 8px;border-radius:10px;border:none;background:transparent;color:var(--muted);
       font-family:var(--font-display);font-weight:600;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;
       cursor:pointer;transition:.15s;touch-action:manipulation}
-    .view-switch button:hover{border-color:var(--hover-border)}
-    .view-switch button.active{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+    .view-switch button:hover{color:var(--text)}
+    .view-switch button.active{background:var(--accent);color:var(--accent-ink);
+      box-shadow:0 6px 16px -6px var(--shadow-color)}
+    .view-switch button.active:hover{color:var(--accent-ink)}
 
     label{display:block;text-align:center;font-family:var(--font-display);font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);margin-bottom:7px}
     input[type="text"],input[type="number"]{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
@@ -310,9 +316,12 @@
         </div>
       </div>
 
-      <div class="view-switch">
-        <button id="setupTabBtn" class="active">Ввод данных</button>
-        <button id="controlTabBtn">Контроль</button>
+      <div class="view-switch-section">
+        <div class="view-switch-label">Режим</div>
+        <div class="view-switch">
+          <button id="setupTabBtn" class="active">Ввод данных</button>
+          <button id="controlTabBtn">Контроль</button>
+        </div>
       </div>
 
       <div id="lanes" class="lanes"></div>
