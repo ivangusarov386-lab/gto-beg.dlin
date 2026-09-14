@@ -299,7 +299,7 @@
         <button id="resetBtn">Сброс</button>
       </div>
 
-      <div class="manual-form">
+      <div class="manual-form" id="manualForm">
         <div>
           <label for="totalLaps">Круги</label>
           <input type="number" id="totalLaps" min="1" value="5" />
@@ -424,6 +424,7 @@
   const raceNameInput = document.getElementById('raceName');
   const lanesEl = document.getElementById('lanes');
   const controlEmptyHint = document.getElementById('controlEmptyHint');
+  const manualForm = document.getElementById('manualForm');
 
   // === Вкладки "Ввод данных" / "Контроль" ===
   const VIEW_MODE_KEY = 'lapCounterViewMode';
@@ -436,6 +437,7 @@
     localStorage.setItem(VIEW_MODE_KEY, mode);
     setupTabBtn.classList.toggle('active', mode === 'setup');
     controlTabBtn.classList.toggle('active', mode === 'control');
+    manualForm.style.display = mode === 'control' ? 'none' : '';
     renderLanes();
   }
   setupTabBtn.addEventListener('click', () => setViewMode('setup'));
@@ -845,6 +847,7 @@
     timerEl.textContent = fmt(0);
     setupTabBtn.classList.toggle('active', viewMode === 'setup');
     controlTabBtn.classList.toggle('active', viewMode === 'control');
+    manualForm.style.display = viewMode === 'control' ? 'none' : '';
     renderLanes();
     renderSavedRuns();
   }
